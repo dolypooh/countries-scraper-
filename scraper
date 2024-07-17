@@ -1,0 +1,40 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+
+url = 'https://www.scrapethissite.com/pages/simple/'
+response = requests.get(url)
+
+# Parse the HTML content
+soup = BeautifulSoup(response.text, 'html.parser')
+
+
+countries = []  # Create an empty list to store dictionaries
+
+
+top_div = soup.find_all('div', {'class': 'col-md-4 country'}) # find the container div for the countries. find_all Returned a list
+for divs in top_div:
+
+  country_name = divs.h3.contents[2].strip()
+  country_dict = dict(country = country_name)
+
+
+  # extract countries data
+  info = divs.findAll('div', {'class': 'country-info'})
+  for i in info:
+    country_dict['capital'] = i.span.text
+    country_dict['population'] = i.find('span', {'class': 'country-population'}).text
+    country_dict['Area '] = i.find('span', {'class': 'country-area'}).text
+
+  # add a dictionary with full data to dicts list
+  countries.append(country_dict)
+
+df = pd.DataFrame(countries)
+df = df.set_index('country', drop=True)
+
+df.columns = df.columns.str.strip()
+df.dtypes
+df.describe()
+
+# df[['population', 'Area']] = pd.to_numeric(['population', 'Area'], errors='coerce')
